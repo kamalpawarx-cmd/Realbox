@@ -1,0 +1,658 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f1121">
+<title>Reelbox</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;700&display=swap">
+<style>
+/* Layout: one column app. Header with search, scrolling main, bottom tab bar. Detail sheet and player are overlays. */
+:root{
+  --bg:#f2f3f8; --surface:#ffffff; --surface2:#e8eaf3; --fg:#14172b; --muted:#585d7a;
+  --line:#d8dbe8; --accent:#4636d8; --accent-fg:#ffffff; --danger:#b3261e;
+  --pl-bg:#000000; --pl-fg:#f4f4f8; --pl-muted:#a8abc0; --pl-line:#3a3d52;
+  --font-display:'Space Grotesk',system-ui,sans-serif;
+  --font-body:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f1121; --surface:#181b31; --surface2:#222645; --fg:#eceefa; --muted:#9aa0c4;
+    --line:#2b2f52; --accent:#9d92ff; --accent-fg:#0f1121; --danger:#ff8a80; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0f1121; --surface:#181b31; --surface2:#222645; --fg:#eceefa; --muted:#9aa0c4;
+  --line:#2b2f52; --accent:#9d92ff; --accent-fg:#0f1121; --danger:#ff8a80; color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.45 var(--font-body);-webkit-text-size-adjust:100%}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+h1,h2,h3{font-family:var(--font-display);margin:0;letter-spacing:-.01em;text-wrap:balance}
+h2{font-size:18px;margin-bottom:10px}
+p{margin:0}
+.muted{color:var(--muted);font-size:13px}
+.gut{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+
+#app{height:100%;display:flex;flex-direction:column;min-height:0}
+header.top{flex:none;padding-block:12px 8px;display:flex;flex-direction:column;gap:10px}
+.brand{font:700 22px/1 var(--font-display);display:flex;align-items:center;gap:8px}
+.brand svg{width:26px;height:26px;color:var(--accent)}
+.field{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);min-width:0}
+textarea.field{resize:vertical;min-height:90px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px}
+main{flex:1;min-height:0;overflow-y:auto;padding-block:8px 24px;display:flex;flex-direction:column;gap:16px}
+main>*{flex:none}
+nav.tabs{flex:none;display:grid;grid-template-columns:repeat(4,1fr);background:var(--surface);border-top:1px solid var(--line);padding-block:6px}
+.tab{display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:0;padding:6px 2px;font-size:11px;font-weight:500;color:var(--muted);border-radius:10px}
+.tab svg{width:22px;height:22px}
+.tab[aria-current="page"]{color:var(--accent)}
+
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 14px;font-size:13px;font-weight:500}
+.chip.on{background:var(--accent);color:var(--accent-fg);border-color:transparent}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:16px 14px}
+.card{background:none;border:0;padding:0;text-align:left;display:flex;flex-direction:column;gap:7px;min-width:0}
+.poster{position:relative;aspect-ratio:2/3;max-width:100%;border-radius:10px;overflow:hidden;display:flex;align-items:center;justify-content:center;color:#fff}
+.poster .ini{font:700 52px/1 var(--font-display);opacity:.9}
+.poster .badge{position:absolute;left:8px;top:8px;font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;background:rgba(10,12,28,.62);color:#fff;border-radius:6px;padding:3px 6px}
+.card .t{font-weight:500;font-size:14px;line-height:1.25;overflow-wrap:anywhere}
+.card .m{font-size:12px;color:var(--muted)}
+
+.hrow{display:flex;gap:12px;overflow-x:auto;padding-bottom:4px}
+.ccard{flex:none;width:200px;background:none;border:0;padding:0;text-align:left;display:flex;flex-direction:column;gap:6px}
+.ccard .thumb{position:relative;aspect-ratio:16/9;border-radius:10px;overflow:hidden;display:flex;align-items:center;justify-content:center;color:#fff}
+.ccard .thumb .ini{font:700 34px/1 var(--font-display);opacity:.9}
+.bar{position:absolute;left:0;right:0;bottom:0;height:4px;background:rgba(255,255,255,.28)}
+.bar i{display:block;height:100%;background:#fff}
+.ccard .t{font-weight:500;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:9px 14px;font-weight:500}
+.btn.primary{background:var(--accent);color:var(--accent-fg);border-color:transparent}
+.btn.danger{color:var(--danger)}
+.btn.sm{padding:6px 10px;font-size:13px}
+.btn:disabled{opacity:.55;cursor:default}
+.actions{display:flex;flex-wrap:wrap;gap:8px}
+
+.empty{border:1px dashed var(--line);border-radius:12px;padding:22px 16px;display:flex;flex-direction:column;gap:10px;align-items:flex-start}
+.empty strong{font-family:var(--font-display);font-size:16px}
+.drop{display:flex;flex-direction:column;gap:4px;align-items:center;text-align:center;border:1.5px dashed var(--accent);border-radius:14px;padding:22px 16px;cursor:pointer;background:var(--surface)}
+.drop.over{background:var(--surface2)}
+.drop strong{font-family:var(--font-display);font-size:17px;color:var(--accent)}
+.row{display:flex;gap:12px;align-items:center;padding:10px;background:var(--surface);border:1px solid var(--line);border-radius:12px}
+.row .rt{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px}
+.row .rn{font-weight:500;overflow-wrap:anywhere}
+.row .mini{flex:none;width:44px}
+.row .mini .poster{border-radius:6px}
+.row .mini .poster .ini{font-size:20px}
+.row .mini .badge{display:none}
+.linkbtn{background:none;border:0;padding:0;text-align:left;font-weight:500;overflow-wrap:anywhere}
+.stack{display:flex;flex-direction:column;gap:10px}
+.field-row{display:flex;gap:8px}
+details{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+summary{cursor:pointer;font-weight:500}
+pre{margin:10px 0 0;padding:10px;background:var(--surface2);border-radius:8px;overflow-x:auto;font-size:12px;line-height:1.5}
+.tag{font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+
+#sheet{position:fixed;inset:0;z-index:40}
+.scrim{position:absolute;inset:0;background:rgba(5,6,16,.55)}
+.sheet{position:absolute;left:0;right:0;bottom:0;max-height:88%;overflow-y:auto;background:var(--surface);border-radius:18px 18px 0 0;padding-top:18px;padding-bottom:calc(20px + env(safe-area-inset-bottom,0px));max-width:620px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+.sh-head{display:flex;gap:14px}
+.sh-poster{flex:none;width:92px}
+.sh-meta{min-width:0;display:flex;flex-direction:column;gap:6px}
+.sh-meta h2{margin:0;font-size:20px}
+.ep{display:flex;gap:10px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+.ep .n{flex:none;width:24px;color:var(--muted);font-variant-numeric:tabular-nums}
+.ep .et{flex:1;min-width:0;overflow-wrap:anywhere}
+
+#player{position:fixed;inset:0;z-index:50;background:var(--pl-bg);color:var(--pl-fg);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+#player[hidden]{display:none}
+.p-top{display:flex;align-items:center;gap:12px;padding-block:10px}
+.p-top .pt{min-width:0}
+#p-title{font:600 16px/1.2 var(--font-display);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#p-ep{font-size:12px;color:var(--pl-muted)}
+.pbtn{border:1px solid var(--pl-line);background:transparent;color:var(--pl-fg);border-radius:10px;padding:8px 12px;font-weight:500}
+.pbtn:disabled{opacity:.4}
+#vid{flex:1;min-height:0;width:100%;background:#000}
+#p-msg{padding:12px 16px;background:#2a1417;color:#ffd9d6;font-size:13px}
+.p-bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding-block:10px}
+.p-bar select{background:transparent;color:var(--pl-fg);border:1px solid var(--pl-line);border-radius:10px;padding:8px 10px}
+.p-bar select option{color:#14172b}
+
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:60;background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:13px;max-width:min(92vw,420px);text-align:center}
+#toast[hidden]{display:none}
+.noshow{display:none!important}
+@media (prefers-reduced-motion:no-preference){.chip,.btn,.tab{transition:background .15s,color .15s}}
+@media (min-width:720px){main,header.top,nav.tabs{padding-left:max(32px,env(safe-area-inset-left,0px));padding-right:max(32px,env(safe-area-inset-right,0px))}}
+</style>
+
+<div id="app">
+  <header class="top gut">
+    <div class="brand">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="4"/><path d="M10 9l5 3-5 3z" fill="currentColor"/></svg>
+      <span>Reelbox</span>
+    </div>
+    <div id="searchwrap"><input id="q" class="field" type="search" placeholder="Search titles" aria-label="Search titles" autocomplete="off"></div>
+  </header>
+  <main id="main" class="gut"></main>
+  <nav class="tabs gut" id="tabs" aria-label="Sections"></nav>
+</div>
+
+<div id="sheet" hidden>
+  <div class="scrim" id="scrim"></div>
+  <div class="sheet gut" id="sheetbox" role="dialog" aria-modal="true" aria-label="Title details"></div>
+</div>
+
+<div id="player" hidden role="dialog" aria-modal="true" aria-label="Player">
+  <div class="p-top gut">
+    <button class="pbtn" id="p-back" aria-label="Close player">Back</button>
+    <div class="pt"><div id="p-title"></div><div id="p-ep"></div></div>
+  </div>
+  <div id="p-msg" hidden></div>
+  <video id="vid" controls playsinline></video>
+  <div class="p-bar gut">
+    <button class="pbtn" id="p-prev">Previous</button>
+    <button class="pbtn" id="p-next">Next</button>
+    <label for="p-speed" class="noshow">Speed</label>
+    <select id="p-speed" aria-label="Playback speed">
+      <option value="0.75">0.75x</option><option value="1" selected>1x</option><option value="1.25">1.25x</option><option value="1.5">1.5x</option><option value="2">2x</option>
+    </select>
+  </div>
+</div>
+<div id="toast" role="status" aria-live="polite" hidden></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.17/hls.min.js"></script>
+<script>
+(function(){
+'use strict';
+var $=function(s,r){return (r||document).querySelector(s)};
+function h(tag,attrs){
+  var e=document.createElement(tag);
+  var a=attrs||{};
+  Object.keys(a).forEach(function(k){
+    var v=a[k];
+    if(k==='class')e.className=v;
+    else if(k.slice(0,2)==='on')e.addEventListener(k.slice(2),v);
+    else if(k==='style')e.style.cssText=v;
+    else if(v===true)e.setAttribute(k,'');
+    else if(v!==false&&v!=null)e.setAttribute(k,v);
+  });
+  for(var i=2;i<arguments.length;i++){
+    var kids=[].concat(arguments[i]);
+    for(var j=0;j<kids.length;j++){
+      var c=kids[j];
+      if(c==null||c===false)continue;
+      e.append(c.nodeType?c:document.createTextNode(String(c)));
+    }
+  }
+  return e;
+}
+
+/* ---------- storage ---------- */
+var mem={};
+var ls={
+  get:function(k,d){try{var v=localStorage.getItem(k);if(v!=null)return JSON.parse(v)}catch(e){} return k in mem?mem[k]:d},
+  set:function(k,v){mem[k]=v;try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+};
+var dbp=null;
+function db(){
+  if(!dbp)dbp=new Promise(function(res,rej){
+    try{
+      var r=indexedDB.open('reelbox',1);
+      r.onupgradeneeded=function(){var d=r.result;d.createObjectStore('uploads',{keyPath:'id'});d.createObjectStore('offline',{keyPath:'id'})};
+      r.onsuccess=function(){res(r.result)};
+      r.onerror=function(){rej(r.error)};
+    }catch(e){rej(e)}
+  });
+  return dbp;
+}
+function tx(store,mode,fn){
+  return db().then(function(d){return new Promise(function(res,rej){
+    var t=d.transaction(store,mode),s=t.objectStore(store),r=fn(s);
+    t.oncomplete=function(){res(r&&r.result)};
+    t.onerror=function(){rej(t.error)};
+    t.onabort=function(){rej(t.error)};
+  })});
+}
+function dbAll(s){return tx(s,'readonly',function(st){return st.getAll()})}
+function dbPut(s,v){return tx(s,'readwrite',function(st){return st.put(v)})}
+function dbDel(s,k){return tx(s,'readwrite',function(st){return st.delete(k)})}
+
+/* ---------- helpers ---------- */
+var TYPES=[['all','All'],['movie','Movies'],['series','Series'],['anime','Anime']];
+var TYPE_KEYS=['movie','series','anime'];
+var typeLabel={movie:'Movie',series:'Series',anime:'Anime'};
+var MSG="This video didn't load. If it comes from an add-on, the viewer you are in may block outside media. Open Reelbox in a regular browser, or add the file to your library.";
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
+function safeUrl(u){try{var x=new URL(String(u),location.href);return /^https?:$/.test(x.protocol)?x.href:null}catch(e){return null}}
+function fmt(n){if(!n)return '0 MB';var u=['B','KB','MB','GB'],i=0;while(n>=1024&&i<3){n/=1024;i++}return (i>1?n.toFixed(1):Math.round(n))+' '+u[i]}
+function hue(s){var x=0;for(var i=0;i<s.length;i++)x=(x*31+s.charCodeAt(i))>>>0;return x%360}
+function bg(title){var hu=hue(title);return 'background:linear-gradient(160deg,hsl('+hu+' 50% 36%),hsl('+((hu+50)%360)+' 55% 20%))'}
+function toast(msg){var t=$('#toast');t.textContent=msg;t.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(function(){t.hidden=true},3600)}
+function confirmBtn(label,fn,cls){
+  var b=h('button',{class:'btn sm '+(cls||'')},label),timer;
+  b.addEventListener('click',function(){
+    if(b.dataset.armed){clearTimeout(timer);fn();return}
+    b.dataset.armed='1';b.textContent='Tap to confirm';
+    timer=setTimeout(function(){delete b.dataset.armed;b.textContent=label},3000);
+  });
+  return b;
+}
+function extFor(mime){
+  if(/webm/.test(mime))return 'webm';
+  if(/matroska/.test(mime))return 'mkv';
+  if(/quicktime/.test(mime))return 'mov';
+  return 'mp4';
+}
+
+/* ---------- catalog ---------- */
+var GB='https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/';
+var BUILTIN={id:'open-movies',name:'Open Movies',builtin:true,description:'Free films from the Blender Foundation, released under Creative Commons.',items:[
+  {id:'bbb',title:'Big Buck Bunny',type:'movie',year:2008,description:'A giant rabbit takes revenge on three bullying rodents.',url:GB+'BigBuckBunny.mp4'},
+  {id:'sintel',title:'Sintel',type:'movie',year:2010,description:'A young woman searches for the baby dragon she befriended.',url:GB+'Sintel.mp4'},
+  {id:'tos',title:'Tears of Steel',type:'movie',year:2012,description:'Scientists in Amsterdam try to stop a robot uprising.',url:GB+'TearsOfSteel.mp4'},
+  {id:'shorts',title:'Blender Open Shorts',type:'series',year:2006,description:'Four open movies in one playlist.',episodes:[
+    {title:'Elephants Dream',url:GB+'ElephantsDream.mp4'},
+    {title:'Big Buck Bunny',url:GB+'BigBuckBunny.mp4'},
+    {title:'Sintel',url:GB+'Sintel.mp4'},
+    {title:'Tears of Steel',url:GB+'TearsOfSteel.mp4'}
+  ]}
+]};
+function norm(it,src,aid){
+  var hasEps=Array.isArray(it.episodes)&&it.episodes.length>0;
+  var raw=hasEps?it.episodes:[{title:it.title,url:it.url}];
+  var eps=raw.map(function(e,i){return {title:String((e&&e.title)||('Episode '+(i+1))),url:safeUrl(e&&e.url)}}).filter(function(e){return e.url});
+  return {key:aid+':'+String(it.id||it.title),title:String(it.title),type:TYPE_KEYS.indexOf(it.type)>=0?it.type:'movie',year:it.year||'',desc:String(it.description||it.desc||''),src:src,eps:eps,multi:hasEps&&raw.length>1};
+}
+var state={addons:ls.get('rb_addons',[]),uploads:[],offline:[],view:'home',filter:'all',q:'',upType:'movie',renaming:null,msg:''};
+function allAddons(){return [BUILTIN].concat(state.addons)}
+function uploadItem(u){return {key:'up:'+u.id,title:u.title,type:u.type,year:'',desc:'',src:'Your library',eps:[{title:u.title,uploadId:u.id}],multi:false,local:true}}
+function allItems(){
+  var out=[];
+  allAddons().forEach(function(a){(a.items||[]).forEach(function(it){var n=norm(it,a.name,a.id);if(n.eps.length)out.push(n)})});
+  state.uploads.slice().sort(function(a,b){return b.added-a.added}).forEach(function(u){out.push(uploadItem(u))});
+  return out;
+}
+function isSaved(ek){return state.offline.some(function(o){return o.id===ek})}
+
+/* ---------- offline saves ---------- */
+function saveOffline(item,i,btn){
+  var ep=item.eps[i],ek=item.key+'#'+i,label=btn.textContent;
+  btn.disabled=true;btn.textContent='Saving…';
+  fetch(ep.url).then(function(r){
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    var total=+r.headers.get('content-length')||0,type=r.headers.get('content-type')||'video/mp4';
+    if(r.body&&r.body.getReader){
+      var rd=r.body.getReader(),chunks=[],got=0;
+      return (function pump(){return rd.read().then(function(x){
+        if(x.done)return new Blob(chunks,{type:type});
+        chunks.push(x.value);got+=x.value.length;
+        if(total)btn.textContent='Saving '+Math.round(got/total*100)+'%';
+        return pump();
+      })})();
+    }
+    return r.blob();
+  }).then(function(blob){
+    return dbPut('offline',{id:ek,title:item.title+(item.multi?' · '+ep.title:''),type:item.type,size:blob.size,added:Date.now(),mime:blob.type,blob:blob});
+  }).then(function(){return dbAll('offline')}).then(function(all){
+    state.offline=all;toast('Saved for offline viewing');render();openDetail(item);
+  }).catch(function(){
+    btn.disabled=false;btn.textContent=label;
+    toast('Could not save. The source may block downloads from this page.');
+  });
+}
+function removeOffline(id){
+  dbDel('offline',id).then(function(){return dbAll('offline')}).then(function(all){state.offline=all;render()}).catch(function(){toast('Could not remove that file.')});
+}
+function exportBlob(rec){
+  var url=URL.createObjectURL(rec.blob);
+  var a=h('a',{href:url,download:rec.title.replace(/[\\/:*?"<>|]+/g,' ').trim()+'.'+extFor(rec.mime||'')});
+  document.body.append(a);a.click();a.remove();
+  setTimeout(function(){URL.revokeObjectURL(url)},4000);
+  toast('If nothing downloads, open Reelbox in a regular browser to export.');
+}
+
+/* ---------- uploads ---------- */
+function addFiles(files){
+  var type=state.upType,n=0,p=Promise.resolve();
+  files.forEach(function(f){
+    if(!(/^video\//.test(f.type)||/\.(mp4|m4v|webm|mkv|mov|ogv)$/i.test(f.name)))return;
+    p=p.then(function(){
+      return dbPut('uploads',{id:uid(),title:f.name.replace(/\.[^.]+$/,'').replace(/[._]+/g,' ').trim()||'Untitled',type:type,size:f.size,added:Date.now(),mime:f.type,blob:f}).then(function(){n++});
+    });
+  });
+  p.then(function(){return dbAll('uploads')}).then(function(all){
+    state.uploads=all;render();
+    toast(n?(n+(n>1?' videos':' video')+' added'):'Choose video files (mp4, webm, mkv, mov).');
+  }).catch(function(){toast('Storage is full or unavailable in this browser.')});
+}
+function renameUpload(id,val){
+  if(state.renaming!==id)return;
+  state.renaming=null;
+  var u=state.uploads.find(function(x){return x.id===id});
+  var done=function(){render()};
+  if(u&&val.trim()&&val.trim()!==u.title){u.title=val.trim();dbPut('uploads',u).then(done,done)}else done();
+}
+function deleteUpload(id){
+  dbDel('uploads',id).then(function(){return dbAll('uploads')}).then(function(all){state.uploads=all;render()}).catch(function(){toast('Could not delete that video.')});
+}
+
+/* ---------- add-ons ---------- */
+function say(m){state.msg=m;var s=$('#ao-status');if(s)s.textContent=m}
+function parseManifest(raw,url){
+  var m=Array.isArray(raw)?{name:'Imported list',items:raw}:raw;
+  if(!m||typeof m!=='object'||!Array.isArray(m.items))throw new Error('The JSON needs an "items" list.');
+  var items=m.items.filter(function(it){return it&&typeof it.title==='string'&&it.title.trim()&&norm(it,'x','x').eps.length});
+  if(!items.length)throw new Error('No playable items found. Each item needs a title and a url, or episodes that each have a url.');
+  return {id:'a'+uid(),name:String(m.name||'Untitled add-on').slice(0,60),description:String(m.description||'').slice(0,160),url:url||null,items:items};
+}
+function installAddon(a){
+  var i=a.url?state.addons.findIndex(function(x){return x.url===a.url}):-1;
+  if(i>=0){a.id=state.addons[i].id;state.addons[i]=a}else state.addons.push(a);
+  ls.set('rb_addons',state.addons);
+  say('Added "'+a.name+'" with '+a.items.length+(a.items.length>1?' titles.':' title.'));
+  render();
+}
+function loadUrl(u,cb){
+  fetch(u).then(function(r){if(!r.ok)throw 0;return r.json()}).then(function(j){
+    var a;try{a=parseManifest(j,u)}catch(e){say(e.message);return}
+    cb(a);
+  }).catch(function(){say("Couldn't load that address. The site may block requests from this page. Paste the JSON below instead.")});
+}
+function removeAddon(id){
+  state.addons=state.addons.filter(function(a){return a.id!==id});
+  ls.set('rb_addons',state.addons);say('Add-on removed.');render();
+}
+
+/* ---------- views ---------- */
+function icon(path){var s=h('span');s.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+path+'</svg>';return s.firstChild}
+var TABS=[
+  ['home','Home','<path d="M4 11l8-7 8 7"/><path d="M6 10v10h12V10"/>'],
+  ['library','Library','<rect x="3" y="5" width="18" height="14" rx="3"/><path d="M12 9v6M9 12h6"/>'],
+  ['saved','Saved','<path d="M12 4v11"/><path d="M7 11l5 5 5-5"/><path d="M5 20h14"/>'],
+  ['addons','Add-ons','<path d="M9 4h3v3a2 2 0 104 0V4h3v5h-3a2 2 0 100 4h3v5h-5v-3a2 2 0 10-4 0v3H5v-5h3a2 2 0 100-4H5V4z"/>']
+];
+function posterEl(item){
+  return h('div',{class:'poster',style:bg(item.title)},h('span',{class:'ini'},(item.title.trim().charAt(0)||'?').toUpperCase()),h('span',{class:'badge'},typeLabel[item.type]));
+}
+function progMap(){return ls.get('rb_prog',{})}
+function lastWatched(item){
+  var p=progMap(),best=null;
+  Object.keys(p).forEach(function(k){var e=p[k];if(e.itemKey===item.key&&(!best||e.at>best.at))best=e});
+  return best;
+}
+function itemCard(item){
+  var meta=[typeLabel[item.type],item.year].filter(Boolean).join(' · ');
+  return h('button',{class:'card',onclick:function(){openDetail(item)},'aria-label':item.title+', '+meta},
+    posterEl(item),h('div',{class:'t'},item.title),h('div',{class:'m'},item.src+(item.multi?' · '+item.eps.length+' episodes':'')));
+}
+function continueCards(items){
+  var p=progMap(),out=[];
+  Object.keys(p).forEach(function(k){
+    var e=p[k];if(!e.d||e.t/e.d>0.95)return;
+    var it=items.find(function(x){return x.key===e.itemKey});
+    if(it&&it.eps[e.i])out.push({it:it,e:e});
+  });
+  out.sort(function(a,b){return b.e.at-a.e.at});
+  return out.slice(0,8).map(function(x){
+    var pct=Math.round(x.e.t/x.e.d*100);
+    return h('button',{class:'ccard',onclick:function(){play(x.it,x.e.i)},'aria-label':'Resume '+x.it.title+' at '+pct+' percent'},
+      h('div',{class:'thumb',style:bg(x.it.title)},h('span',{class:'ini'},(x.it.title.trim().charAt(0)||'?').toUpperCase()),h('div',{class:'bar'},h('i',{style:'width:'+pct+'%'}))),
+      h('div',{class:'t'},x.it.title),
+      h('div',{class:'m muted'},x.it.multi?('Episode '+(x.e.i+1)):typeLabel[x.it.type]));
+  });
+}
+function viewHome(m){
+  var items=allItems(),cont=continueCards(items);
+  if(cont.length)m.append(h('section',{},h('h2',{},'Continue watching'),h('div',{class:'hrow'},cont)));
+  m.append(h('div',{class:'chips',role:'group','aria-label':'Filter by type'},TYPES.map(function(t){
+    return h('button',{class:'chip'+(state.filter===t[0]?' on':''),'aria-pressed':String(state.filter===t[0]),onclick:function(){state.filter=t[0];render()}},t[1]);
+  })));
+  var q=state.q.trim().toLowerCase();
+  var list=items.filter(function(x){return (state.filter==='all'||x.type===state.filter)&&(!q||x.title.toLowerCase().indexOf(q)>=0)});
+  if(!list.length){
+    var none=q?'Nothing matches "'+state.q.trim()+'".':(state.filter==='all'?'Nothing to watch yet.':'No '+typeLabel[state.filter].toLowerCase()+' titles yet.');
+    m.append(h('div',{class:'empty'},h('strong',{},none),h('span',{class:'muted'},'Add a catalog from the Add-ons tab, or put your own videos in the Library.'),
+      h('div',{class:'actions'},h('button',{class:'btn primary',onclick:function(){go('addons')}},'Add an add-on'),h('button',{class:'btn',onclick:function(){go('library')}},'Open library'))));
+    return;
+  }
+  m.append(h('div',{class:'grid'},list.map(itemCard)));
+}
+function viewLibrary(m){
+  m.append(h('section',{},h('h2',{},'Your library'),h('p',{class:'muted'},'Videos you add stay on this device. Nothing is uploaded to a server.')));
+  m.append(h('div',{class:'stack'},
+    h('div',{class:'tag'},'Add as'),
+    h('div',{class:'chips',role:'group','aria-label':'Add as'},TYPES.slice(1).map(function(t){
+      return h('button',{class:'chip'+(state.upType===t[0]?' on':''),'aria-pressed':String(state.upType===t[0]),onclick:function(){state.upType=t[0];render()}},t[1]);
+    }))));
+  var drop=h('label',{class:'drop',for:'file',
+    ondragover:function(e){e.preventDefault();drop.classList.add('over')},
+    ondragleave:function(){drop.classList.remove('over')},
+    ondrop:function(e){e.preventDefault();drop.classList.remove('over');addFiles([].slice.call(e.dataTransfer.files))}},
+    h('strong',{},'Add videos'),h('span',{class:'muted'},'Tap to choose files, or drop them here'));
+  m.append(drop,h('input',{type:'file',id:'file',accept:'video/*,.mkv',multiple:true,hidden:true,onchange:function(e){addFiles([].slice.call(e.target.files));e.target.value=''}}));
+  var ups=state.uploads.slice().sort(function(a,b){return b.added-a.added});
+  if(!ups.length){m.append(h('p',{class:'muted'},'No videos yet. Added files appear here and on Home.'));}
+  else{
+    m.append(h('div',{class:'stack'},ups.map(function(u){
+      var it=uploadItem(u),title;
+      if(state.renaming===u.id){
+        title=h('input',{class:'field',value:u.title,'aria-label':'Title',onkeydown:function(e){if(e.key==='Enter')renameUpload(u.id,e.target.value);if(e.key==='Escape'){state.renaming=null;render()}},onblur:function(e){renameUpload(u.id,e.target.value)}});
+        setTimeout(function(){title.focus();title.select()},0);
+      }else title=h('button',{class:'linkbtn',title:'Rename',onclick:function(){state.renaming=u.id;render()}},u.title);
+      return h('div',{class:'row'},
+        h('div',{class:'mini'},posterEl(it)),
+        h('div',{class:'rt'},
+          h('div',{class:'rn'},title),
+          h('div',{class:'muted'},typeLabel[u.type]+' · '+fmt(u.size)),
+          h('div',{class:'actions'},h('button',{class:'btn sm primary',onclick:function(){play(it,0)}},'Play'),confirmBtn('Delete',function(){deleteUpload(u.id)},'danger'))));
+    })));
+  }
+  var note=h('p',{class:'muted'});
+  m.append(note);
+  try{navigator.storage.estimate().then(function(e){if(e&&e.quota)note.textContent='Device storage in use by this app: '+fmt(e.usage)+' of about '+fmt(e.quota)+'.'}).catch(function(){})}catch(e){}
+}
+function viewSaved(m){
+  m.append(h('section',{},h('h2',{},'Saved for offline'),h('p',{class:'muted'},'Saved titles play without a connection. Export copies a file to your device when Reelbox is open in a regular browser.')));
+  var recs=state.offline.slice().sort(function(a,b){return b.added-a.added});
+  if(!recs.length){
+    m.append(h('div',{class:'empty'},h('strong',{},'Nothing saved yet.'),h('span',{class:'muted'},'Open a title on Home and choose Save offline.'),h('button',{class:'btn primary',onclick:function(){go('home')}},'Browse titles')));
+    return;
+  }
+  var items=allItems();
+  m.append(h('div',{class:'stack'},recs.map(function(r){
+    var cut=r.id.lastIndexOf('#'),k=r.id.slice(0,cut),i=+r.id.slice(cut+1);
+    return h('div',{class:'row'},
+      h('div',{class:'rt'},
+        h('div',{class:'rn'},r.title),
+        h('div',{class:'muted'},typeLabel[r.type]+' · '+fmt(r.size)),
+        h('div',{class:'actions'},
+          h('button',{class:'btn sm primary',onclick:function(){
+            var it=items.find(function(x){return x.key===k})||{key:k,title:r.title,type:r.type,eps:[],multi:false,src:''};
+            if(!it.eps[i])it.eps[i]={title:r.title};
+            play(it,i);
+          }},'Play'),
+          h('button',{class:'btn sm',onclick:function(){exportBlob(r)}},'Export'),
+          confirmBtn('Remove',function(){removeOffline(r.id)},'danger'))));
+  })));
+}
+function viewAddons(m){
+  m.append(h('section',{},h('h2',{},'Add-ons'),h('p',{class:'muted'},'An add-on is a catalog: a list of titles with links to video files. Add catalogs from sources you have the right to stream.')));
+  m.append(h('div',{class:'stack'},allAddons().map(function(a){
+    return h('div',{class:'row'},h('div',{class:'rt'},
+      h('div',{class:'rn'},a.name),
+      h('div',{class:'muted'},(a.description?a.description+' ':'')+a.items.length+(a.items.length===1?' title':' titles')+(a.builtin?' · built in':'')),
+      a.builtin?null:h('div',{class:'actions'},
+        a.url?h('button',{class:'btn sm',onclick:function(){say('Refreshing…');loadUrl(a.url,installAddon)}},'Refresh'):null,
+        confirmBtn('Remove',function(){removeAddon(a.id)},'danger'))));
+  })));
+  m.append(h('section',{class:'stack'},
+    h('h2',{},'Add a catalog'),
+    h('div',{class:'field-row'},
+      h('input',{class:'field',id:'ao-url',type:'url',placeholder:'https://example.com/catalog.json','aria-label':'Catalog address',autocomplete:'off'}),
+      h('button',{class:'btn primary',onclick:function(){
+        var u=safeUrl($('#ao-url').value.trim());
+        if(!u){say('Enter a full address that starts with https://');return}
+        say('Loading…');loadUrl(u,installAddon);
+      }},'Add')),
+    h('textarea',{class:'field',id:'ao-json',placeholder:'Or paste catalog JSON here','aria-label':'Catalog JSON',spellcheck:'false'}),
+    h('div',{class:'actions'},
+      h('button',{class:'btn',onclick:function(){
+        var t=$('#ao-json').value.trim();if(!t){say('Paste some JSON first.');return}
+        var a;try{a=parseManifest(JSON.parse(t),null)}catch(e){say(e instanceof SyntaxError?'That is not valid JSON.':e.message);return}
+        installAddon(a);
+      }},'Import pasted JSON'),
+      h('label',{class:'btn',for:'ao-file'},'Import .json file'),
+      h('input',{type:'file',id:'ao-file',accept:'.json,application/json',hidden:true,onchange:function(e){
+        var f=e.target.files[0];e.target.value='';if(!f)return;
+        f.text().then(function(t){var a;try{a=parseManifest(JSON.parse(t),null)}catch(err){say(err instanceof SyntaxError?'That file is not valid JSON.':err.message);return}installAddon(a)});
+      }})),
+    h('p',{id:'ao-status',class:'muted',role:'status'},state.msg)));
+  var ex=JSON.stringify({name:'My Collection',description:'Optional one-line summary',items:[
+    {id:'m1',title:'Sample Movie',type:'movie',year:2024,description:'Short synopsis',url:'https://example.com/movie.mp4'},
+    {id:'s1',title:'Sample Series',type:'series',episodes:[{title:'Pilot',url:'https://example.com/e1.mp4'},{title:'Episode 2',url:'https://example.com/e2.m3u8'}]}
+  ]},null,2);
+  m.append(h('details',{},h('summary',{},'Catalog format'),
+    h('p',{class:'muted',style:'margin-top:8px'},'type is movie, series or anime. Links can point to mp4, webm or HLS (.m3u8) streams. The host must allow cross-origin requests.'),
+    h('pre',{},ex)));
+}
+function render(){
+  var m=$('#main');
+  var keep=m.scrollTop;
+  m.replaceChildren();
+  $('#searchwrap').hidden=state.view!=='home';
+  if(state.view==='home')viewHome(m);
+  else if(state.view==='library')viewLibrary(m);
+  else if(state.view==='saved')viewSaved(m);
+  else viewAddons(m);
+  m.scrollTop=keep;
+  var nav=$('#tabs');nav.replaceChildren();
+  TABS.forEach(function(t){
+    var b=h('button',{class:'tab',onclick:function(){go(t[0])}},icon(t[2]),t[1]);
+    if(state.view===t[0])b.setAttribute('aria-current','page');
+    nav.append(b);
+  });
+}
+function go(v){if(location.hash!=='#'+v)location.hash=v;else{state.view=v;render()}}
+function syncHash(){
+  var v=location.hash.slice(1);
+  state.view=['home','library','saved','addons'].indexOf(v)>=0?v:'home';
+  $('#main').scrollTop=0;render();
+}
+
+/* ---------- detail sheet ---------- */
+function closeSheet(){$('#sheet').hidden=true}
+function openDetail(item){
+  var box=$('#sheetbox');box.replaceChildren();
+  var lw=lastWatched(item),startAt=lw&&item.eps[lw.i]?lw.i:0;
+  var meta=[typeLabel[item.type],item.year,item.src].filter(Boolean).join(' · ');
+  box.append(h('div',{class:'sh-head'},
+    h('div',{class:'sh-poster'},posterEl(item)),
+    h('div',{class:'sh-meta'},h('h2',{},item.title),h('div',{class:'muted'},meta),item.desc?h('p',{class:'muted'},item.desc):null)));
+  box.append(h('div',{class:'actions'},
+    h('button',{class:'btn primary',onclick:function(){play(item,startAt)}},lw?'Resume':'Play'),
+    h('button',{class:'btn',onclick:closeSheet},'Close')));
+  if(item.multi){
+    box.append(h('div',{},item.eps.map(function(ep,i){
+      var ek=item.key+'#'+i,saved=isSaved(ek),btn;
+      btn=saved?h('button',{class:'btn sm',disabled:true},'Saved'):h('button',{class:'btn sm',onclick:function(){saveOffline(item,i,btn)}},'Save offline');
+      return h('div',{class:'ep'},h('span',{class:'n'},i+1),h('span',{class:'et'},ep.title),
+        h('button',{class:'btn sm primary','aria-label':'Play '+ep.title,onclick:function(){play(item,i)}},'Play'),btn);
+    })));
+  }else if(!item.local){
+    var ek0=item.key+'#0',b0;
+    b0=isSaved(ek0)?h('button',{class:'btn',disabled:true},'Saved for offline'):h('button',{class:'btn',onclick:function(){saveOffline(item,0,b0)}},'Save offline');
+    box.append(h('div',{class:'actions'},b0));
+  }
+  $('#sheet').hidden=false;
+}
+
+/* ---------- player ---------- */
+var cur=null,objUrl=null,hls=null,lastSave=0;
+function showMsg(t){var el=$('#p-msg');el.textContent=t;el.hidden=false}
+function stopMedia(){
+  var v=$('#vid');
+  try{v.pause()}catch(e){}
+  if(hls){hls.destroy();hls=null}
+  v.removeAttribute('src');v.load();
+  if(objUrl){URL.revokeObjectURL(objUrl);objUrl=null}
+}
+function saveProg(){
+  if(!cur)return;
+  var v=$('#vid');
+  if(!v.duration||!isFinite(v.duration))return;
+  var p=progMap(),ek=cur.item.key+'#'+cur.i;
+  p[ek]={itemKey:cur.item.key,i:cur.i,t:v.currentTime,d:v.duration,at:Date.now()};
+  var keys=Object.keys(p);
+  if(keys.length>30){keys.sort(function(a,b){return p[a].at-p[b].at}).slice(0,keys.length-30).forEach(function(k){delete p[k]})}
+  ls.set('rb_prog',p);
+}
+function play(item,i){
+  closeSheet();
+  var ep=item.eps[i];if(!ep)return;
+  var ek=item.key+'#'+i,v=$('#vid');
+  cur=null;stopMedia();
+  cur={item:item,i:i};
+  $('#p-msg').hidden=true;$('#player').hidden=false;
+  $('#p-title').textContent=item.title;
+  $('#p-ep').textContent=item.multi?('Episode '+(i+1)+' · '+ep.title):'';
+  $('#p-prev').disabled=i<=0;$('#p-next').disabled=i>=item.eps.length-1;
+  var src=null;
+  if(ep.uploadId){
+    var u=state.uploads.find(function(x){return x.id===ep.uploadId});
+    if(u){objUrl=URL.createObjectURL(u.blob);src=objUrl}
+  }else{
+    var off=state.offline.find(function(o){return o.id===ek});
+    if(off){objUrl=URL.createObjectURL(off.blob);src=objUrl}else src=ep.url||null;
+  }
+  if(!src){showMsg('This file is no longer available.');return}
+  var p=progMap()[ek];
+  v.onloadedmetadata=function(){
+    v.playbackRate=+$('#p-speed').value;
+    if(p&&p.t>5&&p.d&&p.t<p.d-10)v.currentTime=p.t;
+  };
+  if(/\.m3u8(\?|$)/i.test(src)&&window.Hls&&window.Hls.isSupported()&&!v.canPlayType('application/vnd.apple.mpegurl')){
+    hls=new window.Hls();hls.loadSource(src);hls.attachMedia(v);
+    hls.on(window.Hls.Events.ERROR,function(e,d){if(d&&d.fatal)showMsg(MSG)});
+  }else v.src=src;
+  var pr=v.play();if(pr&&pr.catch)pr.catch(function(){});
+}
+function closePlayer(){
+  saveProg();cur=null;stopMedia();
+  $('#player').hidden=true;
+  render();
+}
+function step(d){if(cur){var it=cur.item,n=cur.i+d;if(it.eps[n]){saveProg();play(it,n)}}}
+
+/* ---------- wiring ---------- */
+$('#q').addEventListener('input',function(e){state.q=e.target.value;if(state.view==='home')render()});
+$('#scrim').addEventListener('click',closeSheet);
+$('#p-back').addEventListener('click',closePlayer);
+$('#p-prev').addEventListener('click',function(){step(-1)});
+$('#p-next').addEventListener('click',function(){step(1)});
+$('#p-speed').addEventListener('change',function(e){$('#vid').playbackRate=+e.target.value});
+var vid=$('#vid');
+vid.addEventListener('timeupdate',function(){if(Date.now()-lastSave>4000){lastSave=Date.now();saveProg()}});
+vid.addEventListener('pause',saveProg);
+vid.addEventListener('ended',function(){if(cur&&cur.item.eps[cur.i+1])step(1)});
+vid.addEventListener('error',function(){if(cur)showMsg(MSG)});
+document.addEventListener('keydown',function(e){
+  if(e.key!=='Escape')return;
+  if(!$('#player').hidden)closePlayer();else if(!$('#sheet').hidden)closeSheet();
+});
+window.addEventListener('hashchange',syncHash);
+
+syncHash();
+Promise.all([dbAll('uploads').catch(function(){return []}),dbAll('offline').catch(function(){return []})]).then(function(r){
+  state.uploads=r[0]||[];state.offline=r[1]||[];render();
+});
+})();
+</script>
+
+</body>
+
+</html>

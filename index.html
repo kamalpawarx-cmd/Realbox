@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Reelbox is a quiet app for movies, series and anime. Stream from catalogs you add, upload your own videos and save titles for offline viewing.">
+<meta name="theme-color" content="#0f1121">
+<title>Reelbox</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;700&display=swap">
+<style>
+:root{
+  --ink:#0f1121;--ink2:#181b31;--line-d:#2b2f52;--fg-d:#eceefa;--soft-d:#cfd3f0;--mut-d:#9aa0c4;--acc-d:#9d92ff;
+  --bg-l:#f2f3f8;--fg-l:#14172b;--mut-l:#585d7a;--line-l:#c9cde0;--acc-l:#4636d8;
+  --display:'Space Grotesk',system-ui,sans-serif;
+  --body:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;font:16px/1.55 var(--body);color:var(--fg-l);background:var(--bg-l);-webkit-text-size-adjust:100%}
+a{color:inherit}
+:focus-visible{outline:3px solid var(--acc-d);outline-offset:3px}
+h1,h2,h3{font-family:var(--display);margin:0;text-wrap:balance}
+p{margin:0}
+.wrap{max-width:1200px;margin:0 auto;padding-left:max(24px,env(safe-area-inset-left,0px));padding-right:max(24px,env(safe-area-inset-right,0px))}
+.dark{background:var(--ink);color:var(--fg-d)}
+.dark2{background:var(--ink2);color:var(--fg-d)}
+.btn{display:inline-flex;align-items:center;min-height:52px;padding:0 28px;border-radius:12px;font-weight:600;font-size:17px;text-decoration:none}
+.btn.sm{min-height:44px;padding:0 20px;font-size:15px}
+.btn.acc{background:var(--acc-d);color:var(--ink)}
+.btn.acc-l{background:var(--acc-l);color:#fff}
+.btn.ghost{border:1px solid #3a3f6b;color:var(--fg-d);font-weight:500}
+
+header.bar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;padding-top:16px;padding-bottom:16px}
+.brand{display:inline-flex;align-items:center;gap:10px;min-height:44px;text-decoration:none;font:700 22px/1 var(--display)}
+nav{display:flex;flex-wrap:wrap;align-items:center;gap:4px}
+nav a.l{display:inline-flex;align-items:center;min-height:44px;padding:0 12px;color:var(--soft-d);text-decoration:none;font-size:15px}
+nav a.btn{margin-left:8px}
+
+.hero{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:56px;padding-top:48px;padding-bottom:88px}
+.hero .copy{flex:1 1 420px;min-width:0;max-width:600px;display:flex;flex-direction:column;gap:24px}
+.hero h1{font-size:clamp(40px,6vw,68px);line-height:1.02;letter-spacing:-.02em}
+.hero .sub{font-size:19px;color:var(--soft-d);max-width:520px}
+.hero .cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:8px}
+.hero .note{font-size:14px;color:var(--mut-d)}
+
+.phone{flex:0 0 auto;width:280px;margin:0 auto;border-radius:42px;background:#000;padding:10px;box-shadow:0 0 0 1px var(--line-d)}
+.screen{height:560px;border-radius:32px;background:var(--ink);overflow:hidden;display:flex;flex-direction:column}
+.ph-top{padding:16px 14px 8px;display:flex;flex-direction:column;gap:10px}
+.ph-brand{display:flex;align-items:center;gap:6px;font:700 16px/1 var(--display);color:var(--fg-d)}
+.ph-search{height:30px;border-radius:9px;background:var(--ink2);border:1px solid var(--line-d);display:flex;align-items:center;padding:0 10px;font-size:11px;color:var(--mut-d)}
+.ph-chips{display:flex;gap:6px}
+.ph-chips span{padding:4px 10px;border-radius:999px;border:1px solid var(--line-d);color:var(--fg-d);font-size:10px;font-weight:500}
+.ph-chips span.on{background:var(--acc-d);color:var(--ink);border-color:transparent;font-weight:600}
+.ph-grid{flex:1;min-height:0;overflow:hidden;padding:4px 14px 0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 10px;align-content:start}
+.ph-card{display:flex;flex-direction:column;gap:5px}
+.ph-poster{aspect-ratio:2/3;border-radius:9px;position:relative;display:flex;align-items:center;justify-content:center;color:#fff;font:700 40px/1 var(--display);background:linear-gradient(160deg,hsl(var(--a) 50% 36%),hsl(var(--b) 55% 20%))}
+.ph-poster i{position:absolute;left:6px;top:6px;padding:2px 5px;border-radius:5px;background:rgba(10,12,28,.62);font:600 8px/1.3 var(--body);letter-spacing:.06em;text-transform:uppercase;font-style:normal}
+.ph-t{font-size:11px;font-weight:500;line-height:1.25}
+.ph-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));background:var(--ink2);border-top:1px solid var(--line-d);padding:10px 6px;text-align:center;font-size:9px;font-weight:500;color:var(--mut-d)}
+.ph-tabs .on{color:var(--acc-d)}
+
+section.block .wrap{padding-top:80px;padding-bottom:80px;display:flex;flex-direction:column;gap:48px}
+h2.big{font-size:clamp(30px,4vw,44px);line-height:1.1;letter-spacing:-.01em;max-width:640px}
+.cols{display:flex;flex-wrap:wrap;gap:40px 32px}
+.col{flex:1 1 240px;min-width:0;display:flex;flex-direction:column;gap:10px}
+.col.rule{border-top:1px solid var(--line-l);padding-top:20px}
+.col h3{font-size:21px}
+.col p{color:var(--mut-l)}
+.col svg{width:28px;height:28px;color:var(--acc-l)}
+
+.split{display:flex;flex-wrap:wrap;align-items:center;gap:48px}
+.split>div{flex:1 1 380px;min-width:0}
+.split .txt{display:flex;flex-direction:column;gap:18px;max-width:520px}
+.split .txt p.lead{color:var(--soft-d);font-size:18px}
+.split .txt p.fine{color:var(--mut-d)}
+pre{margin:0;padding:22px;border-radius:14px;background:var(--ink);border:1px solid var(--line-d);color:var(--soft-d);font:13px/1.6 ui-monospace,Menlo,Consolas,monospace;overflow-x:auto}
+
+.steps .num{font:700 48px/1 var(--display);color:var(--acc-l)}
+.steps .col h3{font-size:21px}
+.dl{display:flex;flex-wrap:wrap;align-items:center;gap:16px 24px}
+.dl span{color:var(--mut-l);font-size:14px;max-width:420px}
+.faq .wrap{padding-top:0;padding-bottom:80px;display:flex;flex-direction:column;gap:32px}
+.faq h2{font-size:clamp(26px,3.5vw,34px);line-height:1.1}
+.faq .col h3{font-size:18px}
+.faq .col{flex-basis:280px}
+footer .wrap{padding-top:32px;padding-bottom:32px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;font-size:14px;color:var(--mut-d)}
+footer b{font:700 17px/1 var(--display);color:var(--fg-d)}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+
+<section class="dark" id="top">
+  <header class="wrap bar">
+    <a class="brand" href="#top">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#9d92ff" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="4"/><path d="M10 9l5 3-5 3z" fill="#9d92ff"/></svg>
+      Reelbox
+    </a>
+    <nav aria-label="Page sections">
+      <a class="l" href="#features">Features</a>
+      <a class="l" href="#addons">Add-ons</a>
+      <a class="l" href="#install">Install</a>
+      <a class="btn sm acc" href="reelbox.html" download>Download</a>
+    </nav>
+  </header>
+
+  <div class="wrap hero">
+    <div class="copy">
+      <h1>Movies, series and anime in one quiet app.</h1>
+      <p class="sub">Stream from catalogs you add, upload videos of your own, and save titles to watch offline.</p>
+      <div class="cta">
+        <a class="btn acc" href="reelbox.html" download>Download Reelbox</a>
+        <a class="btn ghost" href="reelbox.html">Open web app</a>
+      </div>
+      <p class="note">Runs in any modern browser on Android, iPhone and desktop. Plays mp4, webm and HLS.</p>
+    </div>
+
+    <div class="phone" role="img" aria-label="Reelbox home screen showing four title posters, filter chips and a tab bar">
+      <div class="screen">
+        <div class="ph-top">
+          <div class="ph-brand">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9d92ff" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="4"/><path d="M10 9l5 3-5 3z" fill="#9d92ff"/></svg>
+            Reelbox
+          </div>
+          <div class="ph-search">Search titles</div>
+          <div class="ph-chips"><span class="on">All</span><span>Movies</span><span>Series</span><span>Anime</span></div>
+        </div>
+        <div class="ph-grid">
+          <div class="ph-card"><div class="ph-poster" style="--a:215;--b:265"><i>Movie</i>B</div><div class="ph-t">Big Buck Bunny</div></div>
+          <div class="ph-card"><div class="ph-poster" style="--a:330;--b:20"><i>Movie</i>S</div><div class="ph-t">Sintel</div></div>
+          <div class="ph-card"><div class="ph-poster" style="--a:165;--b:215"><i>Movie</i>T</div><div class="ph-t">Tears of Steel</div></div>
+          <div class="ph-card"><div class="ph-poster" style="--a:35;--b:85"><i>Series</i>B</div><div class="ph-t">Blender Open Shorts</div></div>
+        </div>
+        <div class="ph-tabs"><span class="on">Home</span><span>Library</span><span>Saved</span><span>Add-ons</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="block" id="features">
+  <div class="wrap">
+    <h2 class="big">Everything you watch, in one place.</h2>
+    <div class="cols">
+      <div class="col rule">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="4"/><path d="M10 9l5 3-5 3z"/></svg>
+        <h3>Stream what you add</h3>
+        <p>Play mp4, webm and HLS with speed control, episode lists and resume where you stopped.</p>
+      </div>
+      <div class="col rule">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M12 9v6M9 12h6"/></svg>
+        <h3>Your own library</h3>
+        <p>Add videos from your phone or computer and tag them as movie, series or anime. Files stay on your device.</p>
+      </div>
+      <div class="col rule">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="M7 11l5 5 5-5"/><path d="M5 20h14"/></svg>
+        <h3>Save for offline</h3>
+        <p>Keep titles inside the app and watch without a connection. Export a copy when you need one.</p>
+      </div>
+      <div class="col rule">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4h3v3a2 2 0 104 0V4h3v5h-3a2 2 0 100 4h3v5h-5v-3a2 2 0 10-4 0v3H5v-5h3a2 2 0 100-4H5V4z"/></svg>
+        <h3>Add-ons</h3>
+        <p>Add catalogs by link, pasted JSON or file, much like CloudStream repositories.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="block dark2" id="addons">
+  <div class="wrap">
+    <div class="split">
+      <div class="txt">
+        <h2 class="big">Add-ons are just catalogs.</h2>
+        <p class="lead">A catalog is a short JSON file that lists titles and links to video files. Paste one in, add it by link or import the file, and its titles show up on Home.</p>
+        <p class="fine">Reelbox comes with one add-on of free Blender open movies. It does not include or endorse any streaming site. Add only catalogs you have the right to use.</p>
+      </div>
+      <div>
+<pre>{
+  "name": "My Collection",
+  "items": [
+    {
+      "title": "Sample Movie",
+      "type": "movie",
+      "url": "https://example.com/movie.mp4"
+    },
+    {
+      "title": "Sample Series",
+      "type": "series",
+      "episodes": [
+        { "title": "Pilot", "url": "https://example.com/e1.mp4" },
+        { "title": "Episode 2", "url": "https://example.com/e2.m3u8" }
+      ]
+    }
+  ]
+}</pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="block steps" id="install">
+  <div class="wrap">
+    <h2 class="big">Get Reelbox in three steps.</h2>
+    <div class="cols">
+      <div class="col"><div class="num">1</div><h3>Download the file</h3><p>Tap Download Reelbox. You get a single file named reelbox.html.</p></div>
+      <div class="col"><div class="num">2</div><h3>Open it in your browser</h3><p>Find it in Downloads and open it with Chrome, Safari or any modern browser.</p></div>
+      <div class="col"><div class="num">3</div><h3>Add it to your home screen</h3><p>Use the browser menu and choose Add to Home Screen. Reelbox then opens like an app.</p></div>
+    </div>
+    <div class="dl">
+      <a class="btn acc-l" href="reelbox.html" download>Download Reelbox</a>
+      <span>Prefer not to download? Choose Open web app at the top and add that page to your home screen.</span>
+    </div>
+  </div>
+</section>
+
+<section class="block faq">
+  <div class="wrap">
+    <h2>Questions</h2>
+    <div class="cols">
+      <div class="col rule"><h3>Where are my videos stored?</h3><p>On your device, inside your browser's storage. Nothing you add is uploaded to a server.</p></div>
+      <div class="col rule"><h3>Does it come with movie sites?</h3><p>No. Reelbox ships with one add-on of free open movies. Everything else is a catalog you choose to add.</p></div>
+      <div class="col rule"><h3>What if a video won't play?</h3><p>The link must point to an mp4, webm or HLS stream, and the host must allow other sites to load it.</p></div>
+    </div>
+  </div>
+</section>
+
+<footer class="dark">
+  <div class="wrap">
+    <b>Reelbox</b>
+    <span>Version 1.0. Add only catalogs and files you have the right to use.</span>
+  </div>
+</footer>
+
+</body>
+</html>
